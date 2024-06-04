@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
 import { VisionImpairment } from 'src/enums/vision-impairment';
-import { User } from '../user.entity';
+import { User } from '../../../entities/user.entity';
 import { Diagram } from 'src/entities/diagram.entity';
 import { UserPreference } from 'src/entities/user-preferences.entity';
 import { SharedDiagram } from 'src/entities/shared-diagram.entity';

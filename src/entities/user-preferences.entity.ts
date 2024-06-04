@@ -1,5 +1,5 @@
 import { Entity, Column } from 'typeorm';
-import { User } from 'src/users/user.entity';
+import { User } from 'src/entities/user.entity';
 import {
   InterfaceColor,
   InterfaceContrast,

@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { SharedDiagram } from './shared-diagram.entity';
 import { DefaultEntity } from '.';
-import { User } from 'src/users/user.entity';
+import { User } from 'src/entities/user.entity';
 
 @Entity('diagrams')
 export class Diagram extends DefaultEntity {

@@ -14,10 +14,13 @@ import { FindOneParams } from 'src/interfaces/find-one-params.validation';
 import {
   CreateUserRequestDTO,
   UpdateUserRequestDTO,
-} from 'src/users/dto/user.request';
-import { UsersService } from './users.service';
+} from 'src/interfaces/dto/users/user.request';
+import { UsersService } from '../providers/users.service';
 import { ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { GetUserResponseDto, UserResponseDto } from './dto/user.response';
+import {
+  GetUserResponseDto,
+  UserResponseDto,
+} from '../interfaces/dto/users/user.response';
 
 @ApiTags('users')
 @Controller('users')
