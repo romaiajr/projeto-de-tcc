@@ -1,10 +1,6 @@
 import { Entity, Column } from 'typeorm';
 import { User } from 'src/entities/user.entity';
-import {
-  InterfaceColor,
-  InterfaceContrast,
-  SystemColor,
-} from '../enums/user-preferences';
+import { InterfaceContrast } from '../enums/user-preferences';
 import { DefaultEntity } from '.';
 
 /**
@@ -16,23 +12,12 @@ import { DefaultEntity } from '.';
 
 @Entity('user_preferences')
 export class UserPreference extends DefaultEntity {
-  @Column({ nullable: true })
+  @Column()
   audio_description!: boolean;
 
-  @Column({ nullable: true })
+  @Column()
   font_size!: string;
 
-  @Column({ type: 'enum', enum: SystemColor })
-  system_color!: SystemColor;
-
-  @Column({ nullable: true })
-  interface_font_size!: string;
-
-  // Criar enum
-  @Column({ type: 'enum', enum: InterfaceColor })
-  interface_color!: InterfaceColor;
-
-  // Criar enum
   @Column({ type: 'enum', enum: InterfaceContrast })
   interface_contrast!: InterfaceContrast;
 

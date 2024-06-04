@@ -6,7 +6,7 @@ import { Diagram } from 'src/entities/diagram.entity';
 import { UserPreference } from 'src/entities/user-preferences.entity';
 import { SharedDiagram } from 'src/entities/shared-diagram.entity';
 
-export class UserResponseDto {
+export class UserResponseDTO {
   @ApiProperty()
   id: string;
 
@@ -27,7 +27,7 @@ export class UserResponseDto {
   }
 }
 
-export class GetUserResponseDto extends UserResponseDto {
+export class GetUserResponseDTO extends UserResponseDTO {
   @ApiProperty()
   created_at: Date;
 

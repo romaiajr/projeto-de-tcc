@@ -18,16 +18,18 @@ import {
 import { UsersService } from '../providers/users.service';
 import { ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
-  GetUserResponseDto,
-  UserResponseDto,
+  GetUserResponseDTO,
+  UserResponseDTO,
 } from '../interfaces/dto/users/user.response';
+import { UpdateUserPreferencesRequestDTO } from 'src/interfaces/dto/user-preferences/preferences.request';
+import { UserPreferencesResponseDTO } from 'src/interfaces/dto/user-preferences/preferences.response';
 
 @ApiTags('users')
 @Controller('users')
 export class UsersController {
   constructor(private usersService: UsersService) {}
 
-  @ApiResponse({ type: UserResponseDto })
+  @ApiResponse({ type: UserResponseDTO })
   @Post()
   async create(
     @Body() createUserDto: CreateUserRequestDTO,
@@ -37,14 +39,14 @@ export class UsersController {
     return res.status(HttpStatus.CREATED).send(user);
   }
 
-  @ApiResponse({ type: [GetUserResponseDto] })
+  @ApiResponse({ type: [GetUserResponseDTO] })
   @Get()
   async findAll(@Res() res: Response) {
     const users = await this.usersService.findAll();
     return res.status(HttpStatus.OK).send(users);
   }
 
-  @ApiResponse({ type: GetUserResponseDto })
+  @ApiResponse({ type: GetUserResponseDTO })
   @ApiParam({ name: 'id', type: String })
   @Get(':id')
   async findOne(@Param() params: FindOneParams, @Res() res: Response) {
@@ -60,7 +62,7 @@ export class UsersController {
   }
 
   @ApiParam({ name: 'id', type: String })
-  @ApiResponse({ type: UserResponseDto })
+  @ApiResponse({ type: UserResponseDTO })
   @Put(':id')
   async update(
     @Body() updateUserDto: UpdateUserRequestDTO,
@@ -68,6 +70,18 @@ export class UsersController {
     @Res() res: Response,
   ) {
     await this.usersService.update(params.id, updateUserDto);
+    return res.status(HttpStatus.OK).send();
+  }
+
+  @ApiParam({ name: 'id', type: String })
+  @ApiResponse({ type: UserPreferencesResponseDTO })
+  @Put('/preferences:id')
+  async updatePreferences(
+    @Body() updatePreferencesDto: UpdateUserPreferencesRequestDTO,
+    @Param() params: FindOneParams,
+    @Res() res: Response,
+  ) {
+    await this.usersService.updatePreferences(params.id, updatePreferencesDto);
     return res.status(HttpStatus.OK).send();
   }
 }
