@@ -1,24 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from '../entities/user.entity';
+import { DataSource, Repository } from 'typeorm';
+import { User, UserDTO } from '../entities/user.entity';
 import {
   CreateUserRequestDTO,
   UpdateUserRequestDTO,
 } from '../interfaces/dto/users/user.request';
 import { PasswordsService } from './password.service';
 import {
-  GetUserResponseDTO,
-  UserResponseDTO,
-} from '../interfaces/dto/users/user.response';
-import { UserPreference } from 'src/entities/user-preferences.entity';
-import { VisionImpairment } from 'src/enums/vision-impairment';
-import {
-  UpdateUserPreferencesRequestDTO,
+  UserPreference,
   UserPreferencesDTO,
-} from 'src/interfaces/dto/user-preferences/preferences.request';
+} from 'src/entities/user-preferences.entity';
+import { VisionImpairment } from 'src/enums/vision-impairment';
+import { UpdateUserPreferencesRequestDTO } from 'src/interfaces/dto/user-preferences/preferences.request';
 import { FontSizeRange, InterfaceContrast } from 'src/enums/user-preferences';
-import { UserPreferencesResponseDTO } from 'src/interfaces/dto/user-preferences/preferences.response';
 
 @Injectable()
 export class UsersService {
@@ -28,10 +23,13 @@ export class UsersService {
     @InjectRepository(UserPreference)
     private preferencesRepository: Repository<UserPreference>,
     private readonly passwordService: PasswordsService,
+    private dataSource: DataSource,
   ) {}
 
-  configUserPreferences(severity: VisionImpairment): UserPreferencesDTO {
-    const defaultPreferences: UserPreferencesDTO = {
+  configUserPreferences(
+    severity: VisionImpairment,
+  ): Partial<UserPreferencesDTO> {
+    const defaultPreferences: Partial<UserPreferencesDTO> = {
       audio_description: false,
       font_size: FontSizeRange.DEFAULT,
       interface_contrast: InterfaceContrast.DEFAULT,
@@ -56,47 +54,94 @@ export class UsersService {
     return { ...defaultPreferences, ...preferencesMap[severity] };
   }
 
-  async create(user: CreateUserRequestDTO): Promise<UserResponseDTO> {
-    user.password = await this.passwordService.hashPassword(user.password);
-    const createdUser = await this.usersRepository.save(user);
-    const preferences = this.configUserPreferences(
-      createdUser.vision_impairment,
-    );
-    createdUser.preferences = await this.preferencesRepository.save({
-      user_id: createdUser.id,
-      ...preferences,
+  async create(user: CreateUserRequestDTO): Promise<UserDTO> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      if (await queryRunner.manager.findBy(User, { email: user.email })) {
+        throw new Error('Email já cadastrado');
+      }
+      user.password = await this.passwordService.hashPassword(user.password);
+      const createdUser = await queryRunner.manager.save(User, user);
+
+      const preferences = this.configUserPreferences(
+        createdUser.vision_impairment,
+      );
+      const createdPreferences = await queryRunner.manager.save(
+        UserPreference,
+        {
+          user_id: createdUser.id,
+          ...preferences,
+        },
+      );
+      createdUser.preferences = createdPreferences;
+      await queryRunner.manager.save(User, createdUser);
+      await queryRunner.commitTransaction();
+      return UserDTO.toDTO(createdUser);
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async findAll(): Promise<UserDTO[]> {
+    const users = await this.usersRepository.find({
+      relations: ['diagrams', 'preferences', 'shared_diagrams'],
     });
-    return createdUser;
+    return users.map((user) => UserDTO.toDTO(user));
   }
 
-  async findAll(): Promise<GetUserResponseDTO[]> {
-    return await this.usersRepository.find();
-  }
-
-  async findOne(id: string): Promise<GetUserResponseDTO | null> {
-    return await this.usersRepository.findOneBy({ id });
+  async findOne(id: string): Promise<UserDTO | null> {
+    const user = await this.usersRepository.findOne({
+      where: { id: id },
+      relations: ['diagrams', 'preferences', 'shared_diagrams'],
+    });
+    if (!user) {
+      throw new Error('Usuário não encontrado');
+    }
+    return UserDTO.toDTO(user);
   }
 
   async remove(id: string): Promise<void> {
-    await this.usersRepository.delete(id);
+    await this.findOne(id);
+    const currentDate = new Date().toISOString();
+    await this.usersRepository.update(id, {
+      is_deleted: true,
+      deleted_at: currentDate,
+    });
   }
 
-  async update(
-    id: string,
-    user: UpdateUserRequestDTO,
-  ): Promise<UserResponseDTO> {
-    const updatedUser = await this.usersRepository.update(id, user);
-    return updatedUser.raw;
+  async update(id: string, user: UpdateUserRequestDTO): Promise<UserDTO> {
+    const userToUpdate = await this.findOne(id);
+
+    userToUpdate.name = user.name;
+    userToUpdate.email = user.email;
+    userToUpdate.vision_impairment = user.vision_impairment;
+
+    await this.usersRepository.update(id, userToUpdate);
+    return userToUpdate;
   }
 
   async updatePreferences(
     id: string,
     preferences: UpdateUserPreferencesRequestDTO,
-  ): Promise<UserPreferencesResponseDTO> {
-    const updatedPreferences = await this.preferencesRepository.update(
+  ): Promise<UserPreferencesDTO> {
+    const preferencesToUpdate = await this.preferencesRepository.findOneBy({
       id,
-      preferences,
-    );
-    return updatedPreferences.raw;
+    });
+
+    if (!preferencesToUpdate) {
+      throw new Error('Preferências não encontradas');
+    }
+
+    preferencesToUpdate.audio_description = preferences.audio_description;
+    preferencesToUpdate.font_size = preferences.font_size;
+    preferencesToUpdate.interface_contrast = preferences.interface_contrast;
+
+    await this.preferencesRepository.update(id, preferencesToUpdate);
+    return UserPreferencesDTO.toDTO(preferencesToUpdate);
   }
 }

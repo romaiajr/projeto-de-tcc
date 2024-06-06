@@ -5,7 +5,6 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-
   const config = new DocumentBuilder()
     .setTitle('Projeto de TCC - Backend')
     .setDescription('Rotas dos projeto')

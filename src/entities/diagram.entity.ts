@@ -7,7 +7,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { SharedDiagram } from './shared-diagram.entity';
-import { DefaultEntity } from '.';
+import { DefaultEntity } from './default-entity';
 import { User } from 'src/entities/user.entity';
 
 @Entity('diagrams')

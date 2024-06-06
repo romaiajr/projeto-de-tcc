@@ -5,7 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { UsersModule } from './users.module';
-import { join } from 'path';
+import entities from 'src/entities';
 
 @Module({
   imports: [
@@ -23,7 +23,8 @@ import { join } from 'path';
         password: configService.get<string>('database.pwd'),
         database: configService.get<string>('database.name'),
         synchronize: configService.get<boolean>('database.synchronize'),
-        entities: [join(__dirname, '**', '*.entity.{ts,js}')],
+        logging: ['query', 'error'],
+        entities: entities,
       }),
     }),
     UsersModule,

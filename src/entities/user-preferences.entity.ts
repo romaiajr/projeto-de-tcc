@@ -1,7 +1,8 @@
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, OneToOne } from 'typeorm';
 import { User } from 'src/entities/user.entity';
 import { InterfaceContrast } from '../enums/user-preferences';
-import { DefaultEntity } from '.';
+import { DefaultEntity } from './default-entity';
+import { ApiProperty } from '@nestjs/swagger';
 
 /**
  * Entity representing user preferences.
@@ -21,5 +22,29 @@ export class UserPreference extends DefaultEntity {
   @Column({ type: 'enum', enum: InterfaceContrast })
   interface_contrast!: InterfaceContrast;
 
+  @OneToOne(() => User, (user) => user.preferences)
   user!: User;
+}
+
+export class UserPreferencesDTO {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  audio_description: boolean;
+
+  @ApiProperty()
+  font_size: string;
+
+  @ApiProperty({ enum: InterfaceContrast })
+  interface_contrast!: InterfaceContrast;
+
+  static toDTO(preferences: UserPreference): UserPreferencesDTO {
+    const preferencesDto = new UserPreferencesDTO();
+    preferencesDto.id = preferences.id;
+    preferencesDto.audio_description = preferences.audio_description;
+    preferencesDto.font_size = preferences.font_size;
+    preferencesDto.interface_contrast = preferences.interface_contrast;
+    return preferencesDto;
+  }
 }
