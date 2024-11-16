@@ -6,9 +6,9 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { Diagram } from './diagram.entity';
-import { User } from 'src/users/user.entity';
+import { User } from 'src/entities/user.entity';
 import { AccessPermission } from 'src/enums/access-permission';
-import { DefaultEntity } from '.';
+import { DefaultEntity } from './default-entity';
 
 @Entity('shared_diagrams')
 export class SharedDiagram extends DefaultEntity {

@@ -1,7 +1,12 @@
-import { DefaultEntity } from 'src/entities';
+import { ApiProperty } from '@nestjs/swagger';
+import { Exclude } from 'class-transformer';
+import { DefaultEntity } from 'src/entities/default-entity';
 import { Diagram } from 'src/entities/diagram.entity';
 import { SharedDiagram } from 'src/entities/shared-diagram.entity';
-import { UserPreference } from 'src/entities/user-preferences.entity';
+import {
+  UserPreference,
+  UserPreferencesDTO,
+} from 'src/entities/user-preferences.entity';
 import { VisionImpairment } from 'src/enums/vision-impairment';
 import {
   Column,
@@ -39,8 +44,36 @@ export class User extends DefaultEntity {
   shared_diagrams!: SharedDiagram;
 
   @DeleteDateColumn({ nullable: true })
+  @Exclude()
   deleted_at!: Date;
 
   @Column({ default: false })
   is_deleted!: boolean;
+}
+
+export class UserDTO {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  name: string;
+
+  @ApiProperty()
+  email: string;
+
+  @ApiProperty()
+  vision_impairment: VisionImpairment;
+
+  @ApiProperty()
+  preferences: UserPreferencesDTO;
+
+  static toDTO(user: User): UserDTO {
+    const userDto = new UserDTO();
+    userDto.id = user.id;
+    userDto.name = user.name;
+    userDto.email = user.email;
+    userDto.vision_impairment = user.vision_impairment;
+    userDto.preferences = UserPreferencesDTO.toDTO(user.preferences);
+    return userDto;
+  }
 }

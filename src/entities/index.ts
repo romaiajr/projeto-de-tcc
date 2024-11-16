@@ -1,20 +1,6 @@
-import {
-  PrimaryGeneratedColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
-} from 'typeorm';
+import { User } from './user.entity';
+import { UserPreference } from './user-preferences.entity';
+import { Diagram } from './diagram.entity';
+import { SharedDiagram } from './shared-diagram.entity';
 
-export abstract class DefaultEntity {
-  @PrimaryGeneratedColumn('uuid')
-  id!: string;
-
-  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  created_at!: Date;
-
-  @UpdateDateColumn({
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
-  })
-  updated_at!: Date;
-}
+export default [User, UserPreference, Diagram, SharedDiagram];
