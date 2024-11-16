@@ -1,25 +1,25 @@
 import {
   Body,
   Controller,
-  Delete,
   Get,
   HttpStatus,
-  Param,
   Post,
   Put,
+  Req,
   Res,
+  UseGuards,
 } from '@nestjs/common';
-import { Response } from 'express';
-import { FindOneParams } from 'src/interfaces/find-one-params.validation';
+import { Response, Request } from 'express';
 import {
   CreateUserRequestDTO,
   UpdateUserRequestDTO,
 } from 'src/interfaces/dto/users/user.request';
 import { UsersService } from '../providers/users.service';
-import { ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UpdateUserPreferencesRequestDTO } from 'src/interfaces/dto/user-preferences/preferences.request';
 import { UserDTO } from 'src/entities/user.entity';
 import { UserPreferencesDTO } from 'src/entities/user-preferences.entity';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('users')
 @Controller('users')
@@ -36,53 +36,39 @@ export class UsersController {
     return res.status(HttpStatus.CREATED).send(user);
   }
 
-  @ApiResponse({ type: [UserDTO] })
-  @Get()
-  async findAll(@Res() res: Response) {
-    const users = await this.usersService.findAll();
-    return res.status(HttpStatus.OK).send(users);
-  }
-
   @ApiResponse({ type: UserDTO })
-  @ApiParam({ name: 'id', type: String })
-  @Get(':id')
-  async findOne(@Param() params: FindOneParams, @Res() res: Response) {
-    const user = await this.usersService.findOne(params.id);
+  @UseGuards(AuthGuard('jwt'))
+  @Get()
+  async findOne(@Res() res: Response, @Req() req: Request) {
+    const userId = req.user['userId'];
+    const user = await this.usersService.findOne(userId);
     return res.status(HttpStatus.OK).send(user);
   }
 
-  @ApiParam({ name: 'id', type: String })
-  @Delete(':id')
-  async remove(@Param() params: FindOneParams, @Res() res: Response) {
-    await this.usersService.remove(params.id);
-    return res.status(HttpStatus.OK).send('Usuário Desativado');
-  }
-
-  @ApiParam({ name: 'id', type: String })
   @ApiResponse({ type: UserDTO })
-  @Put(':id')
+  @UseGuards(AuthGuard('jwt'))
+  @Put()
   async update(
     @Body() updateUserDto: UpdateUserRequestDTO,
-    @Param() params: FindOneParams,
     @Res() res: Response,
+    @Req() req: Request,
   ) {
-    const updatedUser = await this.usersService.update(
-      params.id,
-      updateUserDto,
-    );
+    const userId = req.user['userId'];
+    const updatedUser = await this.usersService.update(userId, updateUserDto);
     return res.status(HttpStatus.OK).send(updatedUser);
   }
 
-  @ApiParam({ name: 'id', type: String })
   @ApiResponse({ type: UserPreferencesDTO })
-  @Put('/preferences/:id')
+  @UseGuards(AuthGuard('jwt'))
+  @Put('/preferences/')
   async updatePreferences(
     @Body() updatePreferencesDto: UpdateUserPreferencesRequestDTO,
-    @Param() params: FindOneParams,
     @Res() res: Response,
+    @Req() req: Request,
   ) {
+    const userId = req.user['userId'];
     const updatedPreferences = await this.usersService.updatePreferences(
-      params.id,
+      userId,
       updatePreferencesDto,
     );
     return res.status(HttpStatus.OK).send(updatedPreferences);

@@ -84,19 +84,21 @@ export class UsersService {
         throw new Error('Email já cadastrado');
       }
       user.password = await this.passwordService.hashPassword(user.password);
-      const createdUser = await queryRunner.manager.save(User, user);
+      const createdUser = queryRunner.manager.create(User, user);
 
       const preferences = this.configUserPreferences(
         createdUser.vision_impairment,
       );
-      const createdPreferences = await queryRunner.manager.save(
+      const createdPreferences = queryRunner.manager.create(UserPreference, {
+        user_id: createdUser.id,
+        ...preferences,
+      });
+
+      const savedPreferences = await queryRunner.manager.save(
         UserPreference,
-        {
-          user_id: createdUser.id,
-          ...preferences,
-        },
+        createdPreferences,
       );
-      createdUser.preferences = createdPreferences;
+      createdUser.preferences = savedPreferences;
       await queryRunner.manager.save(User, createdUser);
       await queryRunner.commitTransaction();
       return UserDTO.toDTO(createdUser);
