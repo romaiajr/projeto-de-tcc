@@ -10,29 +10,44 @@ import {
   deserializeFromBase64,
   serializeToBase64,
 } from 'src/utils/base64.handler';
+import { User } from 'src/entities/user.entity';
 
 @Injectable()
 export class DiagramsService {
   constructor(
     @InjectRepository(Diagram)
     private diagramsRepository: Repository<Diagram>,
+    @InjectRepository(User)
+    private usersRepository: Repository<User>,
     private dataSource: DataSource,
   ) {}
 
-  async create(diagram: CreateDiagramRequestDTO): Promise<DiagramDTO> {
+  async create(
+    diagram: CreateDiagramRequestDTO,
+    userId: string,
+  ): Promise<DiagramDTO> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
+      const user = await this.usersRepository.findOne({
+        where: { id: userId },
+      });
       if (diagram.serialized_object) {
         diagram.serialized_object = serializeToBase64(
           diagram.serialized_object,
         );
       }
-      const createdDiagram = await queryRunner.manager.save(Diagram, diagram);
-      await queryRunner.manager.save(Diagram, diagram);
+      const createdDiagram = queryRunner.manager.create(Diagram, {
+        user,
+        ...diagram,
+      });
+      const savedDiagram = await queryRunner.manager.save(
+        Diagram,
+        createdDiagram,
+      );
       await queryRunner.commitTransaction();
-      return DiagramDTO.toDTO(createdDiagram);
+      return DiagramDTO.toDTO(savedDiagram);
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw error;
@@ -41,8 +56,10 @@ export class DiagramsService {
     }
   }
 
-  async findAll(): Promise<DiagramDTO[]> {
-    const diagrams = await this.diagramsRepository.find();
+  async findAll(userId: string): Promise<DiagramDTO[]> {
+    const diagrams = await this.diagramsRepository.find({
+      where: { user: { id: userId } },
+    });
     return diagrams.map((diagram) => {
       if (diagram.serialized_object) {
         diagram.serialized_object = deserializeFromBase64(
@@ -53,9 +70,9 @@ export class DiagramsService {
     });
   }
 
-  async findOne(id: string): Promise<DiagramDTO | null> {
+  async findOne(id: string, userId: string): Promise<DiagramDTO | null> {
     const diagram = await this.diagramsRepository.findOne({
-      where: { id: id },
+      where: { id: id, user: { id: userId } },
     });
     if (!diagram) {
       throw new Error('Usuário não encontrado');
@@ -68,8 +85,8 @@ export class DiagramsService {
     return DiagramDTO.toDTO(diagram);
   }
 
-  async remove(id: string): Promise<void> {
-    await this.findOne(id);
+  async remove(id: string, userId: string): Promise<void> {
+    await this.findOne(id, userId);
     const currentDate = new Date().toISOString();
     await this.diagramsRepository.update(id, {
       is_deleted: true,
@@ -79,9 +96,10 @@ export class DiagramsService {
 
   async update(
     id: string,
+    userId: string,
     diagram: UpdateDiagramRequestDTO,
   ): Promise<DiagramDTO> {
-    const diagramToUpdate = await this.findOne(id);
+    const diagramToUpdate = await this.findOne(id, userId);
     if (diagram.serialized_object) {
       diagramToUpdate.serialized_object = serializeToBase64(
         diagram.serialized_object,

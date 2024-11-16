@@ -9,4 +9,5 @@ export default () => ({
     type: process.env.DATABASE_TYPE as any,
     synchronize: true,
   },
+  jwtSecretKey: process.env.JWT_SECRET,
 });

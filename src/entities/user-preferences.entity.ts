@@ -16,7 +16,7 @@ export class UserPreference extends DefaultEntity {
   @Column()
   audio_description!: boolean;
 
-  @Column()
+  @Column({ nullable: true })
   audio_rate!: number;
 
   // @Column()
@@ -37,7 +37,7 @@ export class UserPreferencesDTO {
   audio_description: boolean;
 
   @ApiProperty()
-  audio_rate: number;
+  audio_rate?: number;
 
   // @ApiProperty()
   // font_size: string;
