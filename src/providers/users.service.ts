@@ -13,7 +13,7 @@ import {
 } from 'src/entities/user-preferences.entity';
 import { VisionImpairment } from 'src/enums/vision-impairment';
 import { UpdateUserPreferencesRequestDTO } from 'src/interfaces/dto/user-preferences/preferences.request';
-import { FontSizeRange, InterfaceContrast } from 'src/enums/user-preferences';
+// import { FontSizeRange, InterfaceContrast } from 'src/enums/user-preferences';
 
 @Injectable()
 export class UsersService {
@@ -31,22 +31,37 @@ export class UsersService {
   ): Partial<UserPreferencesDTO> {
     const defaultPreferences: Partial<UserPreferencesDTO> = {
       audio_description: false,
-      font_size: FontSizeRange.DEFAULT,
-      interface_contrast: InterfaceContrast.DEFAULT,
+      audio_rate: null,
+      // font_size: FontSizeRange.DEFAULT,
+      // interface_contrast: InterfaceContrast.DEFAULT,
     };
+
+    // const preferencesMap: Record<
+    //   VisionImpairment,
+    //   Partial<UserPreferencesDTO>
+    // > = {
+    //   [VisionImpairment.NONE]: {},
+    //   [VisionImpairment.MILD]: { font_size: FontSizeRange.MILD },
+    //   [VisionImpairment.MODERATE]: { font_size: FontSizeRange.MODERATE },
+    //   [VisionImpairment.NEAR]: { font_size: FontSizeRange.NEAR },
+    //   [VisionImpairment.SEVERE]: {
+    //     audio_description: true,
+    //     font_size: FontSizeRange.SEVERE,
+    //     interface_contrast: InterfaceContrast.HIGH_CONTRAST_BLACK_WHITE,
+    //   },
+    //   [VisionImpairment.BLINDNESS]: { audio_description: true },
+    // };
 
     const preferencesMap: Record<
       VisionImpairment,
       Partial<UserPreferencesDTO>
     > = {
       [VisionImpairment.NONE]: {},
-      [VisionImpairment.MILD]: { font_size: FontSizeRange.MILD },
-      [VisionImpairment.MODERATE]: { font_size: FontSizeRange.MODERATE },
-      [VisionImpairment.NEAR]: { font_size: FontSizeRange.NEAR },
+      [VisionImpairment.MILD]: {},
+      [VisionImpairment.MODERATE]: {},
+      [VisionImpairment.NEAR]: { audio_description: true },
       [VisionImpairment.SEVERE]: {
         audio_description: true,
-        font_size: FontSizeRange.SEVERE,
-        interface_contrast: InterfaceContrast.HIGH_CONTRAST_BLACK_WHITE,
       },
       [VisionImpairment.BLINDNESS]: { audio_description: true },
     };
@@ -59,7 +74,13 @@ export class UsersService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      if (await queryRunner.manager.findBy(User, { email: user.email })) {
+      if (
+        await this.usersRepository.findOne({
+          where: { email: user.email },
+          relations: ['diagrams', 'preferences'],
+          cache: false,
+        })
+      ) {
         throw new Error('Email já cadastrado');
       }
       user.password = await this.passwordService.hashPassword(user.password);
@@ -89,7 +110,7 @@ export class UsersService {
 
   async findAll(): Promise<UserDTO[]> {
     const users = await this.usersRepository.find({
-      relations: ['diagrams', 'preferences', 'shared_diagrams'],
+      relations: ['diagrams', 'preferences'],
     });
     return users.map((user) => UserDTO.toDTO(user));
   }
@@ -97,7 +118,7 @@ export class UsersService {
   async findOne(id: string): Promise<UserDTO | null> {
     const user = await this.usersRepository.findOne({
       where: { id: id },
-      relations: ['diagrams', 'preferences', 'shared_diagrams'],
+      relations: ['diagrams', 'preferences'],
     });
     if (!user) {
       throw new Error('Usuário não encontrado');
@@ -138,8 +159,9 @@ export class UsersService {
     }
 
     preferencesToUpdate.audio_description = preferences.audio_description;
-    preferencesToUpdate.font_size = preferences.font_size;
-    preferencesToUpdate.interface_contrast = preferences.interface_contrast;
+    preferencesToUpdate.audio_rate = preferences.audio_rate;
+    // preferencesToUpdate.font_size = preferences.font_size;
+    // preferencesToUpdate.interface_contrast = preferences.interface_contrast;
 
     await this.preferencesRepository.update(id, preferencesToUpdate);
     return UserPreferencesDTO.toDTO(preferencesToUpdate);

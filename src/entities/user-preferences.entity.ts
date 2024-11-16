@@ -1,6 +1,6 @@
 import { Entity, Column, OneToOne } from 'typeorm';
 import { User } from 'src/entities/user.entity';
-import { InterfaceContrast } from '../enums/user-preferences';
+// import { InterfaceContrast } from '../enums/user-preferences';
 import { DefaultEntity } from './default-entity';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -17,10 +17,13 @@ export class UserPreference extends DefaultEntity {
   audio_description!: boolean;
 
   @Column()
-  font_size!: string;
+  audio_rate!: number;
 
-  @Column({ type: 'enum', enum: InterfaceContrast })
-  interface_contrast!: InterfaceContrast;
+  // @Column()
+  // font_size!: string;
+
+  // @Column({ type: 'enum', enum: InterfaceContrast })
+  // interface_contrast!: InterfaceContrast;
 
   @OneToOne(() => User, (user) => user.preferences)
   user!: User;
@@ -34,17 +37,21 @@ export class UserPreferencesDTO {
   audio_description: boolean;
 
   @ApiProperty()
-  font_size: string;
+  audio_rate: number;
 
-  @ApiProperty({ enum: InterfaceContrast })
-  interface_contrast!: InterfaceContrast;
+  // @ApiProperty()
+  // font_size: string;
+
+  // @ApiProperty({ enum: InterfaceContrast })
+  // interface_contrast!: InterfaceContrast;
 
   static toDTO(preferences: UserPreference): UserPreferencesDTO {
     const preferencesDto = new UserPreferencesDTO();
     preferencesDto.id = preferences.id;
     preferencesDto.audio_description = preferences.audio_description;
-    preferencesDto.font_size = preferences.font_size;
-    preferencesDto.interface_contrast = preferences.interface_contrast;
+    preferencesDto.audio_rate = preferences.audio_rate;
+    // preferencesDto.font_size = preferences.font_size;
+    // preferencesDto.interface_contrast = preferences.interface_contrast;
     return preferencesDto;
   }
 }

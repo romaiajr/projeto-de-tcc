@@ -6,6 +6,7 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { UsersModule } from './users.module';
 import entities from 'src/entities';
+import { DiagramsModule } from './diagrams.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import entities from 'src/entities';
       }),
     }),
     UsersModule,
+    DiagramsModule,
   ],
 })
 export class AppModule {
