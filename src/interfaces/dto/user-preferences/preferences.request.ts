@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsEnum, IsNotEmpty, IsString } from 'class-validator';
-import { InterfaceContrast } from 'src/enums/user-preferences';
+import { IsBoolean, IsInt, IsNotEmpty } from 'class-validator';
+// import { InterfaceContrast } from 'src/enums/user-preferences';
 
 export class UpdateUserPreferencesRequestDTO {
   @ApiProperty()
@@ -10,11 +10,16 @@ export class UpdateUserPreferencesRequestDTO {
 
   @ApiProperty()
   @IsNotEmpty()
-  @IsString()
-  font_size!: string;
+  @IsInt()
+  audio_rate!: number;
 
-  @ApiProperty()
-  @IsNotEmpty()
-  @IsEnum(InterfaceContrast)
-  interface_contrast!: InterfaceContrast;
+  // @ApiProperty()
+  // @IsNotEmpty()
+  // @IsString()
+  // font_size!: string;
+
+  // @ApiProperty()
+  // @IsNotEmpty()
+  // @IsEnum(InterfaceContrast)
+  // interface_contrast!: InterfaceContrast;
 }
